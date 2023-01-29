@@ -34,6 +34,11 @@ public class TCPClient {
         // Recieve data from server
         while (/* Exit when server is done sending data */) {
             // Save data sent from server
+            /*
+             * Is a loop necessary? Can I use any other functions
+             * to automatically read all data and store it at the
+             * correct location?
+             */
         }
 
         // Terminate connection
