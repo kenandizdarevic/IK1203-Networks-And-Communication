@@ -47,6 +47,10 @@ public class TCPClient {
         return fromServerBuffer;
     }
 
+    public byte[] askServer(String hostname, int port) throws IOException {
+        return null;
+    }
+
     /* TCPClient ska:
      * Skicka och ta emot bytes på OutputStream/InputStream objekt
      * OutputStream.write() skickar ut data
