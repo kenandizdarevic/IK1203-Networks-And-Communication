@@ -31,7 +31,7 @@ public class TCPClient {
             // Send bytes via socket to server
             clientSocket.getOutputStream().write(toServerBytes);
 
-            /* Set up ByteArrayOutputStream */
+            // Set up ByteArrayOutputStream
             ByteArrayOutputStream dataFromServer = new ByteArrayOutputStream();
         
         try(InputStream inputStreamFromServer = clientSocket.getInputStream()) {
