@@ -1,5 +1,8 @@
 package tcpclient;
 import java.net.*;
+
+import javax.naming.ldap.SortControl;
+
 import java.io.*;
 
 
@@ -25,27 +28,38 @@ public class TCPClient {
      * @return byte[] with data recieved from server
      * @throws IOException
      */
-    public byte[] askServer(String hostname, int port, byte [] toServerBytes) throws IOException {
+    public byte[] askServer(String hostname, int port, byte [] toServerBytes) throws IOException, SocketTimeoutException {
         
-            byte[] fromServerBuffer = new byte[BUFFERSIZE];
-            int data;
-
-            Socket clientSocket = new Socket(hostname, port);
+        byte[] fromServerBuffer = new byte[BUFFERSIZE];
+        ByteArrayOutputStream dataFromServer = new ByteArrayOutputStream();      
+        
+        try (Socket clientSocket = new Socket(hostname, port)) {
             clientSocket.getOutputStream().write(toServerBytes);
+            if (shutdown) {
+                clientSocket.shutdownOutput();
+            }
 
-            ByteArrayOutputStream dataFromServer = new ByteArrayOutputStream();
-        
-        try(InputStream inputStreamFromServer = clientSocket.getInputStream()) {
-            while ((data = inputStreamFromServer.read(fromServerBuffer)) != -1) {
+            if (timeout != null) {
+                clientSocket.setSoTimeout(timeout);
+            }
+
+            InputStream inputStreamFromServer = clientSocket.getInputStream();
+            int data = 0;
+            int bytesRecieved = 0;
+            while (((data = inputStreamFromServer.read(fromServerBuffer)) != -1) && (limit == null || bytesRecieved + data <= 0)) {
                 dataFromServer.write(fromServerBuffer, 0, data);
                 fromServerBuffer = new byte[BUFFERSIZE];
+                bytesRecieved += data;
             }
             clientSocket.close();
+        }
+        catch (SocketTimeoutException exception) {
             return dataFromServer.toByteArray();
         }
         catch (IOException exception) {
             throw new IOException("Something went wrong: ", exception);
         }
+        return dataFromServer.toByteArray();
     }
     
    /**
@@ -59,3 +73,9 @@ public class TCPClient {
         return askServer(hostname, port, null);
     }
 }
+
+/*
+ * Shutdown: Om shutdown = true, clientSocket.shutdownOutput(), ske efter jag har skickat data på socket
+ * Timeout: Om jag inte tar emot efter x sekunder, skriv ut error och returnera array
+ * Limit: Får ej ta emot mer än limit bytes, måste vara prick limit
+ */
