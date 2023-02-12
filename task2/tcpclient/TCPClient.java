@@ -73,9 +73,3 @@ public class TCPClient {
         return askServer(hostname, port, null);
     }
 }
-
-/*
- * Shutdown: Om shutdown = true, clientSocket.shutdownOutput(), ske efter jag har skickat data på socket
- * Timeout: Om jag inte tar emot efter x sekunder, skriv ut error och returnera array
- * Limit: Får ej ta emot mer än limit bytes, måste vara prick limit
- */
