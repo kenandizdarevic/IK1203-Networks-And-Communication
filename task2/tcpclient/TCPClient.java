@@ -46,7 +46,12 @@ public class TCPClient {
             InputStream inputStreamFromServer = clientSocket.getInputStream();
             int data = 0;
             int bytesRecieved = 0;
-            while (((data = inputStreamFromServer.read(fromServerBuffer)) != -1) && (limit == null || bytesRecieved + data <= this.limit)) {
+            while ((data = inputStreamFromServer.read(fromServerBuffer)) != -1) {
+                if (limit != null && bytesRecieved + data > this.limit) {
+                    dataFromServer.write(fromServerBuffer, 0, this.limit - bytesRecieved);
+                    break;
+                }
+
                 dataFromServer.write(fromServerBuffer, 0, data);
                 fromServerBuffer = new byte[BUFFERSIZE];
                 bytesRecieved += data;
