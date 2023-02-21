@@ -1,7 +1,6 @@
 package tcpclient;
 import java.net.*;
 
-import javax.naming.ldap.SortControl;
 
 import java.io.*;
 

@@ -13,26 +13,41 @@ public class HTTPAsk {
             while(true) {
                 byte[] buffer = new byte[BUFFERSIZE]; 
 
+                System.out.println("Waiting for request!");
                 Integer port = 0;
                 String hostname = null;
                 boolean shutdown = false;
                 Integer timeout = null;
                 Integer limit = null; 
-                String string = null;
-                byte[] toServerBytes = null;
+                String string = "";
+                byte[] toServerBytes = new byte[0];
 
                 Socket connectionSocket = serverSocket.accept();
+                System.out.println("Connection");
                 InputStream input = connectionSocket.getInputStream();
                 OutputStream output = connectionSocket.getOutputStream();
+                int data = input.read(buffer);
                 
-                String request = new String(buffer, 0, input.read(buffer));
-                URL url = new URL("http://" + request.split("\r\n")[1].split(" ")[1]);
-                String host = url.getHost();
-                String query = url.getQuery();
-                String path = url.getPath();
+                String request = new String(buffer, 0, data);
+                String httpMethod = request.split("\r\n")[0].split(" ")[0];
+                String httpVersion = request.split("\r\n")[0].split(" ")[2];
+                String path = request.split("\r\n")[0].split(" ")[1];
+                               
+                if (!httpMethod.contains("GET") || !httpVersion.contains("HTTP/1.1")) {
+                    String response = "HTTP/1.1 400 Bad Request\r\n\r\n";
+                    output.write(response.getBytes());
+                    throw new Exception(response);
+                } else if(!path.startsWith("/ask")) {
+                    String response = "HTTP/1.1 404 Not Found\r\n\r\n";
+                    output.write(response.getBytes());
+                    throw new Exception(response);
+                }
+
+                String query = path.split("\\?")[1];
                 String[] parameters = query.split("&");
 
                 for (String params : parameters) {
+                   // System.out.println("HERE");
                     String[] paramPart = params.split("=");
                     String paramName = paramPart[0];
                     String paramValue = paramPart[1];
@@ -40,33 +55,44 @@ public class HTTPAsk {
                     switch(paramName) {
                         case "hostname":
                             hostname = paramValue;
+                            System.out.println(hostname);
                             break;
                         case "port":
                             port = Integer.parseInt(paramValue);
+                            System.out.println(port);
                             break;
                         case "shutdown":
                             shutdown = Boolean.parseBoolean(paramValue);
+                            System.out.println(shutdown);
                             break;
                         case "timeout":
                             timeout = Integer.parseInt(paramValue);
+                            System.out.println(timeout);
                             break;
                         case "limit":
                             limit = Integer.parseInt(paramValue);
+                            System.out.println(limit);
                             break;
                         case "string":
-                            toServerBytes = paramValue.getBytes();
+                            string = paramValue + "\n";
                             break;
                     }
-                }
-            
+                }   
+                toServerBytes = string.getBytes();
                 TCPClient tcpClient = new TCPClient(shutdown, timeout, limit);
-                byte[] result = tcpClient.askServer(hostname, port, buffer);
-                String response = new String(result, StandardCharsets.UTF_8);
+                System.out.println("TCP Client initalized");
+                byte[] fromServerBytes = tcpClient.askServer(hostname, port, toServerBytes);
+                System.out.println("Ask server");
+                String response1 = new String(fromServerBytes, StandardCharsets.UTF_8);
+                String response = "HTTP/1.1 200 OK\r\n" + response1;
+                System.out.println(response);
+                output.write(response.getBytes());                
+            }
 
-                output.write(("HTTP/1.1 200 OK \r\n \r\n" + response).getBytes());
-            } 
         } catch(IOException exception) {
             System.err.println(exception);
+            serverSocket.close();
+        } finally {
             serverSocket.close();
         }
     }
