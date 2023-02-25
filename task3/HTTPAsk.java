@@ -1,13 +1,32 @@
 import java.net.*;
 import java.nio.charset.StandardCharsets;
-
 import tcpclient.TCPClient;
 import java.io.*;
 
 public class HTTPAsk {
     private static int BUFFERSIZE = 1024;
 
-    public static void main(String[] args) throws Exception, IOException {
+    public static void main(String[] args) throws IOException {
+        ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]));
+        System.out.println("Server running on port: " + Integer.parseInt(args[0]));
+        while (true) {
+            Socket clientSocket = serverSocket.accept();
+            OutputStream outputStream = clientSocket.getOutputStream();
+
+            String response = "HTTP/1.1 200 OK\r\n" +
+                            "Content-Type: text/plain\r\n" +
+                            "Content-Length: 12\r\n" +
+                            "\r\n" +
+                            "Hello World!";
+            byte[] resonseBytes = response.getBytes("UTF-8");
+
+            outputStream.write(resonseBytes);
+            outputStream.flush();
+        }
+    
+    }
+
+  /*  public static void main(String[] args) throws Exception, IOException {
         ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]));
         try {
             while(true) {
@@ -95,6 +114,6 @@ public class HTTPAsk {
         } finally {
             serverSocket.close();
         }
-    }
+    } */
 }
 
